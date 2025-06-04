@@ -30,7 +30,19 @@ def solve_bvp_shooting_method(x_span, boundary_conditions, n_points=100, max_ite
         
     Returns:
         tuple: (x array, y array) containing the solution
+        
+    Raises:
+        ValueError: If x_span or boundary_conditions are invalid
+        TypeError: If input types are incorrect
     """
+    # Input validation
+    if not isinstance(x_span, (tuple, list)) or len(x_span) != 2:
+        raise ValueError("x_span must be a tuple or list of length 2")
+    if not isinstance(boundary_conditions, (tuple, list)) or len(boundary_conditions) != 2:
+        raise ValueError("boundary_conditions must be a tuple or list of length 2")
+    if x_span[0] >= x_span[1]:
+        raise ValueError("x_span must be in increasing order")
+    
     x0, x1 = x_span
     u0, u1 = boundary_conditions
     
@@ -41,7 +53,7 @@ def solve_bvp_shooting_method(x_span, boundary_conditions, n_points=100, max_ite
     def objective(m):
         """Objective function to find root of (u(x1) - u1)"""
         sol = solve_ivp(ode_system_shooting, x_span, [u0, m], 
-                        t_eval=np.linspace(x0, x1, n_points))
+                       t_eval=np.linspace(x0, x1, n_points))
         return sol.y[0, -1] - u1
     
     # Use secant method to find the correct initial slope
@@ -64,7 +76,7 @@ def solve_bvp_shooting_method(x_span, boundary_conditions, n_points=100, max_ite
     
     # Solve with the final slope
     sol = solve_ivp(ode_system_shooting, x_span, [u0, m_final], 
-                    t_eval=np.linspace(x0, x1, n_points))
+                   t_eval=np.linspace(x0, x1, n_points))
     
     return sol.t, sol.y[0]
 
@@ -80,9 +92,15 @@ def ode_system_shooting(t, y):
     Returns:
         array: Derivatives [u', u'']
     """
-    u, up = y
+    # Handle both array and scalar cases for y
+    if isinstance(y, (list, np.ndarray)):
+        u, up = y
+    else:
+        u = y
+        up = 0  # This case shouldn't happen with solve_ivp
+    
     upp = -np.pi * (u + 1) / 4
-    return [up, upp]
+    return np.array([up, upp])
 
 
 def solve_bvp_scipy_wrapper(x_span, boundary_conditions, n_points=50):
@@ -97,6 +115,14 @@ def solve_bvp_scipy_wrapper(x_span, boundary_conditions, n_points=50):
     Returns:
         tuple: (x array, y array) containing the solution
     """
+    # Input validation
+    if not isinstance(x_span, (tuple, list)) or len(x_span) != 2:
+        raise ValueError("x_span must be a tuple or list of length 2")
+    if not isinstance(boundary_conditions, (tuple, list)) or len(boundary_conditions) != 2:
+        raise ValueError("boundary_conditions must be a tuple or list of length 2")
+    if x_span[0] >= x_span[1]:
+        raise ValueError("x_span must be in increasing order")
+    
     x0, x1 = x_span
     u0, u1 = boundary_conditions
     
@@ -149,13 +175,16 @@ def boundary_conditions_scipy(ya, yb):
     return np.array([ya[0] - 1, yb[0] - 1])
 
 
-def compare_methods_and_plot(x_span, boundary_conditions):
+def compare_methods_and_plot(x_span=(0, 1), boundary_conditions=(1, 1)):
     """
     Compare the shooting method and scipy.solve_bvp solutions and plot results.
     
     Parameters:
-        x_span (tuple): Interval boundaries (x0, x1)
-        boundary_conditions (tuple): Boundary values (u(x0), u(x1))
+        x_span (tuple): Interval boundaries (x0, x1), default (0, 1)
+        boundary_conditions (tuple): Boundary values (u(x0), u(x1)), default (1, 1)
+        
+    Returns:
+        dict: Dictionary containing solution data and comparison metrics
     """
     # Solve with both methods
     x_shoot, y_shoot = solve_bvp_shooting_method(x_span, boundary_conditions)
@@ -164,6 +193,8 @@ def compare_methods_and_plot(x_span, boundary_conditions):
     # Calculate difference
     y_scipy_interp = np.interp(x_shoot, x_scipy, y_scipy)
     difference = y_shoot - y_scipy_interp
+    max_diff = np.max(np.abs(difference))
+    rms_diff = np.sqrt(np.mean(difference**2))
     
     # Create plots
     plt.figure(figsize=(12, 8))
@@ -189,12 +220,22 @@ def compare_methods_and_plot(x_span, boundary_conditions):
     plt.tight_layout()
     plt.show()
     
-    # Print maximum difference
-    print(f"Maximum absolute difference: {np.max(np.abs(difference)):.2e}")
+    # Return results as dictionary
+    results = {
+        'x_shooting': x_shoot,
+        'y_shooting': y_shoot,
+        'x_scipy': x_scipy,
+        'y_scipy': y_scipy,
+        'max_difference': max_diff,
+        'rms_difference': rms_diff
+    }
+    
+    print(f"Maximum absolute difference: {max_diff:.2e}")
+    print(f"RMS difference: {rms_diff:.2e}")
+    
+    return results
 
 
 # Example usage
 if __name__ == "__main__":
-    x_span = (0, 1)
-    boundary_conditions = (1, 1)
-    compare_methods_and_plot(x_span, boundary_conditions)
+    results = compare_methods_and_plot()

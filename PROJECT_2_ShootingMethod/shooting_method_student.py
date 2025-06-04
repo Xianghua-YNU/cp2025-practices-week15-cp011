@@ -42,6 +42,8 @@ def solve_bvp_shooting_method(x_span, boundary_conditions, n_points=100, max_ite
         raise ValueError("boundary_conditions must be a tuple or list of length 2")
     if x_span[0] >= x_span[1]:
         raise ValueError("x_span must be in increasing order")
+    if not isinstance(n_points, int) or n_points <= 1:
+        raise ValueError("n_points must be an integer greater than 1")
     
     x0, x1 = x_span
     u0, u1 = boundary_conditions
@@ -92,13 +94,9 @@ def ode_system_shooting(t, y):
     Returns:
         array: Derivatives [u', u'']
     """
-    # Handle both array and scalar cases for y
-    if isinstance(y, (list, np.ndarray)):
-        u, up = y
-    else:
-        u = y
-        up = 0  # This case shouldn't happen with solve_ivp
-    
+    # Ensure y is always treated as an array
+    y = np.asarray(y)
+    u, up = y
     upp = -np.pi * (u + 1) / 4
     return np.array([up, upp])
 
@@ -122,6 +120,8 @@ def solve_bvp_scipy_wrapper(x_span, boundary_conditions, n_points=50):
         raise ValueError("boundary_conditions must be a tuple or list of length 2")
     if x_span[0] >= x_span[1]:
         raise ValueError("x_span must be in increasing order")
+    if not isinstance(n_points, int) or n_points <= 1:
+        raise ValueError("n_points must be an integer greater than 1")
     
     x0, x1 = x_span
     u0, u1 = boundary_conditions

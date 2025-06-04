@@ -16,7 +16,6 @@ GM = 1.0  # Gravitational constant * Mass of central body (e.g., G*M_sun)
 # For simplicity, we can also assume the mass of the orbiting particle m=1.
 
 def derivatives(t, state_vector, gm_val):
-    """
     Computes the derivatives for the state vector [x, y, vx, vy].
 
     The equations of motion in Cartesian coordinates are:
@@ -33,7 +32,6 @@ def derivatives(t, state_vector, gm_val):
 
     Returns:
         np.ndarray: A 1D array of the derivatives [dx/dt, dy/dt, dvx/dt, dvy/dt].
-    """
     x, y, vx, vy = state_vector
     r_cubed = (x**2 + y**2)**1.5
     

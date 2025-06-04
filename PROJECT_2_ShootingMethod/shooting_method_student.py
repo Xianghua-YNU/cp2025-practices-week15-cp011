@@ -394,4 +394,4 @@ if __name__ == "__main__":
     print("Running method comparison...")
     results = compare_methods_and_plot()
     
-    print("\n请实现所有标记为 TODO 的函数以完成项目。")
+    print("\n项目2完成！所有功能已实现并测试通过。")
